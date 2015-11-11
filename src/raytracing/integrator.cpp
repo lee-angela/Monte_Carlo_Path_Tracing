@@ -79,6 +79,13 @@ glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned i
     }
 }
 
+glm::mat4 createTransfMat(Intersection &isx) {
+    glm::mat4 tranfMat = glm::mat4(glm::vec4(isx.tangent,0.0f),
+                                   glm::vec4(isx.bitangent,0.0f),
+                                   glm::vec4(isx.normal,0.0f));
+
+}
+
 glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned int &samples_taken) {
     // specular reflective - will not be seen by direct lighting because there is 0 probability that the sampled ray
     // (i.e. the reflection ray) will see the randomly sampled point on the light
@@ -87,6 +94,9 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
     int depth = 0;
     glm::vec3 ID_lighting;
 
+    if (isx.object_hit->material->is_light_source) {
+        return glm::vec3(0.0f); //light emitted is calculated in EstimateDirectLighting()!
+    }
     //if wi sampled sees a light, ignore -> 0 (at depth 0)
     if (depth == 0) {
         //sample wi and see if it sees a light
@@ -94,6 +104,10 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
         glm::vec3 woW = glm::normalize(this->scene->camera.eye - isx.point);
         glm::vec3 sampled_wi;
         float pdf_ret;
+
+        //transform the wo and wi to local space before sending to evaluateEnergy functions
+
+
         isx.object_hit->material->SampleAndEvaluateScatteredEnergy(isx,woW,sampled_wi,pdf_ret, BSDF_ALL);
         for (int i = 0; i < this->scene->lights.size(); i++) {
             Intersection light_isx = this->scene->lights[i]->GetIntersection(Ray(isx.point, sampled_wi));
@@ -109,13 +123,16 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
     //light estimation loop
     while (true) {
         depth++;
+        if (depth >= max_depth) {
+            break;
+        }
+
         //LTE - calculate the equation
         //calculate the brdf()*|dot| component of the LTE (light transport equation)
         glm::vec3 rgb_comp = brdf()*glm::abs(glm::dot());
         glm::vec3 Li = lightSample.object_hit->material->EvaluateScatteredEnergy(lightSample,-wj,-wj,BSDF_ALL); //light radiance
 
-
-        float maxRGB = glm::max();
+        float maxRGB = glm::max(rgb_comp[2],glm::max(rgb_comp[0], rbg_comp[1])); //find max comp of this vector
 
 
 
@@ -126,6 +143,9 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
                 break; //if rand number > throughput, stop ray.
             }
         }
+
+        //if this iteration NOT filtered with Russian Roulette, then continue to find the indirect lighting
+
 
     }
     return ID_lighting;
@@ -147,7 +167,7 @@ glm::vec3 Integrator::TraceRay(Ray r, unsigned int depth)
     glm::vec3 direct_light = EstimateDirectLighting(isx,N);
     glm::vec3 indirect_light = EstimateIndirectLighting(isx,N);
 
-
+    return direct_light+indirect_light;
 }
 
 
