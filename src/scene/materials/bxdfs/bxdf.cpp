@@ -17,5 +17,5 @@ glm::vec3 BxDF::EvaluateHemisphereScatteredEnergy(const glm::vec3 &wo, int num_s
 float BxDF::PDF(const glm::vec3 &wo, const glm::vec3 &wi) const
 {
     //TODO
-    return 0.0f;
+    return 0.0f; 
 }

@@ -22,6 +22,7 @@ public:
 
     //Samples taken must be set in the function. It tells the how many ray samples were used to estimate the direct
     glm::vec3 EstimateDirectLighting(const Intersection &isx, unsigned int &samples_taken);
+    glm::vec3 EstimateIndirectLighting(const Intersection &isx, unsigned int &samples_taken);
 
     Scene* scene;
     IntersectionEngine* intersection_engine;

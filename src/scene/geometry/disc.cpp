@@ -21,7 +21,7 @@ void Disc::ComputeArea()
  * @param float b (rand float between 0 and 1)
  * @return Intersection in world coordinates of the sampled point
  */
-Intersection Disc::SamplePoint(float a, float b) {
+Intersection Disc::SamplePoint(float a, float b, Intersection isx) {
     glm::vec4 pt1 = glm::vec4(0.5f,0.0f,0.0f,1.0f); //any point on circumfrence
     float angle = a*2*PI; //fraction of the entire circumfrence of disc
     glm::vec3 axis(0,0,1); //rotate around z axis
@@ -31,11 +31,11 @@ Intersection Disc::SamplePoint(float a, float b) {
     finalPt = glm::vec4(b*pt2,1.0f); //between pt2 and origin
     finalPt = this->transform.T()*finalPt; //transform this sampled pt
 
-    Intersection isx;
-    isx.point = glm::vec3(finalPt);
-    isx.normal = glm::vec3(glm::normalize(this->transform.T()*glm::vec4(0.0f,0.0f,1.0f,0.0f)));
-    isx.object_hit = this;
-    return isx;
+    Intersection pt;
+    pt.point = glm::vec3(finalPt);
+    pt.normal = glm::vec3(glm::normalize(this->transform.invTransT()*glm::vec4(0.0f,0.0f,1.0f,0.0f)));
+    pt.object_hit = this;
+    return pt;
 }
 
 
@@ -59,6 +59,11 @@ Intersection Disc::GetIntersection(Ray r)
         result.t = glm::distance(result.point, r.origin);
         result.texture_color = Material::GetImageColorInterp(GetUVCoordinates(glm::vec3(P)), material->texture);
         //TODO: Store the tangent and bitangent
+        glm::vec3 local_y = glm::normalize(glm::vec3(this->transform.invTransT()*glm::vec4(0.0f,1.0f,0.0f,0.0f)));
+        result.tangent = glm::normalize(glm::cross(local_y, result.normal));
+        result.bitangent = glm::normalize(glm::cross(result.normal, result.tangent));
+
+
         return result;
     }
     return result;

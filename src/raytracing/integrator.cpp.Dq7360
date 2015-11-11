@@ -1,0 +1,82 @@
+#include <raytracing/integrator.h>
+#include <math.h>
+
+
+Integrator::Integrator():
+    max_depth(5)
+{
+    scene = NULL;
+    intersection_engine = NULL;
+}
+
+glm::vec3 ComponentMult(const glm::vec3 &a, const glm::vec3 &b)
+{
+    return glm::vec3(a.x * b.x, a.y * b.y, a.z * b.z);
+}
+
+
+glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned int &samples_taken) {
+
+    //pick random light source to trace ray to
+    int random = floor(rand()%this->scene->lights.count());
+    //pick random pt on this light's geometry to trace ray to
+    Intersection lightSample = this->scene->lights[random]->SamplePoint(rand()%1, rand()%1);
+    glm::vec3 wj = lightSample.point - isx.point; //incoming ray of light (towards light, originating from isx.point)
+    //check if there are obstructions
+    Ray light_feeler = Ray(isx.point, glm::normalize(wj));
+
+    //if the object hit is the light source, return light's energy calc
+    if (isx.object_hit->material->is_light_source) {
+        glm::vec3 rad_emit = isx.object_hit->material->EvaluateScatteredEnergy(lightSample, glm::normalize(-wj), glm::normalize(-wj),BSDF_ALL);
+        return rad_emit;
+    }
+
+    //test for shadows
+    Intersection obstruction;
+    for (int i = 0; i < this->scene->objects.size(); i++) {
+        Intersection temp = this->scene->objects[i]->GetIntersection(light_feeler);
+        if ((temp.t < obstruction.t && temp.t > 0) || (temp.t > 0 && obstruction.t < 0)) {
+            obstruction = temp;
+        }
+    }
+    //if this light feeler hits a different object, return black color
+    if (obstruction.object_hit != lightSample.object_hit) {
+        return glm::vec3(0.0f,0.0f,0.0f);
+    }
+
+    glm::vec3 brdf = isx.object_hit->material->EvaluateScatteredEnergy(isx,this->scene->camera.eye,wj,BSDF_ALL);
+    glm::vec3 Li = lightSample.object_hit->material->EvaluateScatteredEnergy(lightSample, glm::normalize(-wj),glm::normalize(-wj),BSDF_ALL); //light radiance
+    float pdf = lightSample.object_hit->RayPDF(lightSample,Ray(lightSample.point,glm::normalize(isx.point-lightSample.point))); //ray is towards the light geom
+
+    if (pdf > 0.0001f) {
+        glm::vec3 Ld = brdf * Li * glm::abs(glm::dot(wj, isx.normal))/pdf;
+        return Ld/(float)samples_taken;
+    } else {
+        return glm::vec3(0.0f,0.0f,0.0f);
+    }
+}
+
+
+
+//Basic ray trace
+glm::vec3 Integrator::TraceRay(Ray r, unsigned int depth)
+{
+    if (depth >= max_depth) { //do not continue if max depth is reached
+        return glm::vec3(0.0f);
+    }
+    Intersection isx = this->intersection_engine->GetIntersection(r); //find intersection from ray
+    isx.point = isx.point + 0.0001f*isx.normal;
+
+    glm::vec3 color = glm::vec3(0.0f);
+    unsigned int N = this->scene->sqrt_samples*this->scene->sqrt_samples;
+    for (int i = 0; i < N; i++) {
+        color += EstimateDirectLighting(isx,N);
+    }
+    return color;
+
+}
+
+void Integrator::SetDepth(unsigned int depth)
+{
+    max_depth = depth;
+}

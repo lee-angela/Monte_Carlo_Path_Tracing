@@ -227,7 +227,7 @@ void MyGL::RaytraceScene()
             unsigned int x_start = X * x_block_size;
             unsigned int x_end = glm::min((X + 1) * x_block_size, width);
             //Create and run the thread
-            render_threads[Y * x_block_count + X] = new RenderThread(x_start, x_end, y_start, y_end, 1, 5, &(scene.film), &(scene.camera), &(integrator));
+            render_threads[Y * x_block_count + X] = new RenderThread(x_start, x_end, y_start, y_end, 10, 5, &(scene.film), &(scene.camera), &(integrator));
             render_threads[Y * x_block_count + X]->start();
         }
     }

@@ -1,6 +1,13 @@
 #include <scene/geometry/geometry.h>
 
+/**
+ * @brief Geometry::RayPDF
+ * @param isx with light
+ * @param ray going towards THIS geom
+ * @return
+ */
 float Geometry::RayPDF(const Intersection &isx, const Ray &ray)
+
 {
     //The isx passed in was tested ONLY against us (no other scene objects), so we test if NULL
     //rather than if != this.
@@ -9,21 +16,22 @@ float Geometry::RayPDF(const Intersection &isx, const Ray &ray)
         return 0;
     }
 
-//find THETA between incoming_ray and surface normal at pt.
+    //ray leaving Geometry (leaving light)
+    //isx is on light
 
-    //normalize both the ray and the normal
-    glm::vec3 incoming_ray = glm::normalize(ray.direction);
+    //ray leaving the light source
+    glm::vec3 wj = glm::normalize(ray.origin - isx.point); // towards geom (in same dir as light normal)
     glm::vec3 norm = glm::normalize(isx.normal);
     //take dot product of these vectors
-    float val = glm::dot(incoming_ray, norm);
+    float val = glm::dot(wj, norm);
     //solve for THETA
     float theta = glm::acos(val);
-
-    return 1.0f/(glm::cos(theta)*this->area);
+    float r = glm::distance(isx.point,ray.origin); //dist between light point & geom intersected
+    return r*r/(glm::cos(theta)*this->area);
 
 }
 
-Intersection Geometry::SamplePoint(float a, float b) {
-    Intersection isx;
-    return isx;
+Intersection Geometry::SamplePoint(float a, float b, Intersection isx) {
+    Intersection pt;
+    return pt;
 }

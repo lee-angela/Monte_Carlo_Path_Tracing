@@ -27,7 +27,8 @@ public:
     virtual glm::vec3 ComputeNormal(const glm::vec3 &P) = 0;
 
     //Returns the solid-angle weighted probability density function given a point we're trying to illuminate and
-    //a ray going towards the Geometry
+    //a ray going towards the Geometry (leaving light)
+    //isx is on light
     virtual float RayPDF(const Intersection &isx, const Ray &ray);
 
     //This is called by the XML Reader after it's populated the scene's list of geometry
@@ -37,9 +38,9 @@ public:
     virtual void ComputeArea() = 0;
 
 
-    //only implemented for light's = discs & squarePlanes
-    virtual Intersection SamplePoint(float a, float b); //used when this is a light source
-
+    //only implemented for light's = discs & squarePlanes,
+    // isx = intersection on non-light geom
+    virtual Intersection SamplePoint(float a, float b, Intersection isx); //used when this is a light source
 
 
 //Member variables

@@ -10,10 +10,12 @@ public:
     Intersection GetIntersection(Ray r);
     virtual glm::vec2 GetUVCoordinates(const glm::vec3 &point);
     virtual glm::vec3 ComputeNormal(const glm::vec3 &P);
+    Intersection GetSurfaceSample(float u1, float u2, const glm::vec3 &isx_normal);
     void create();
 
     virtual void ComputeArea();
 
     //not implemented as light source
-    virtual Intersection SamplePoint(float a, float b);
+    //isx = Intersection on non-light geom
+    virtual Intersection SamplePoint(float a, float b, Intersection isx);
 };

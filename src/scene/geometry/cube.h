@@ -15,5 +15,6 @@ public:
     virtual void ComputeArea();
 
     //not implemented as light source
-    virtual Intersection SamplePoint(float a, float b);
+    //isx = Intersection on non-light geom
+    virtual Intersection SamplePoint(float a, float b, Intersection isx);
 };

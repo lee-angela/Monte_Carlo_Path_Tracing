@@ -8,6 +8,7 @@
 #include <raytracing/samplers/uniformpixelsampler.h>
 #include <raytracing/samplers/stratifiedpixelsampler.h>
 #include <scene/materials/bxdfs/lambertBxDF.h>
+#include <chrono>
 
 Scene::Scene()
 {}
@@ -44,6 +45,9 @@ void Scene::CreateTestScene()
     camera.far_clip = 100.0f;
     camera.create();
     film = Film(400, 400);
+
+    //seed once for random num generator
+    seed = std::chrono::system_clock::now().time_since_epoch().count();
 }
 
 void Scene::Clear()

@@ -15,16 +15,16 @@ void SquarePlane::ComputeArea()
  * @param float b (rand float between 0 and 1)
  * @return Intersection in world coordinates of the sampled point
  */
-Intersection SquarePlane::SamplePoint(float a, float b) {
-    Intersection isx;
+Intersection SquarePlane::SamplePoint(float a, float b, Intersection isx) {
+    Intersection pt;
 
     //start along one edge
     glm::vec3 pt1 = glm::vec3(-0.5+b,-0.5+a,0);
-    isx.point = pt1;
-    isx.normal = glm::vec3(0.0f,0.0f,1.0f);
-    isx.object_hit = this;
+    pt.point = glm::vec3(this->transform.T()*glm::vec4(pt1, 1.0f));
+    pt.normal = glm::normalize(glm::vec3(this->transform.invTransT()*glm::vec4(0.0f,0.0f,1.0f,0.0f)));
+    pt.object_hit = this;
 
-    return isx;
+    return pt;
 }
 
 Intersection SquarePlane::GetIntersection(Ray r)
@@ -45,6 +45,10 @@ Intersection SquarePlane::GetIntersection(Ray r)
         result.t = glm::distance(result.point, r.origin);
         result.texture_color = Material::GetImageColorInterp(GetUVCoordinates(glm::vec3(P)), material->texture);
         //TODO: Store the tangent and bitangent
+        glm::vec3 local_y = glm::normalize(glm::vec3(this->transform.invTransT()*glm::vec4(0.0f,1.0f,0.0f,0.0f)));
+        result.tangent = glm::normalize(glm::cross(local_y, result.normal));
+        result.bitangent = glm::normalize(glm::cross(result.normal, result.tangent));
+
         return result;
     }
     return result;

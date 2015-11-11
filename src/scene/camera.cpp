@@ -71,7 +71,7 @@ void Camera::RecomputeAttributes()
 
     float tan_fovy = tan(fovy/2 * DEG2RAD);
     float len = glm::length(ref - eye);
-    aspect = width/height;
+    aspect = (float)width/(float)height;
     V = up*len*tan_fovy;
     H = right*len*aspect*tan_fovy;
 }

@@ -27,9 +27,9 @@ void Cube::ComputeArea()
     this->area = 2*face1 + 2*face2 + 2*face3;
 }
 
-Intersection Cube::SamplePoint(float a, float b) {
-    Intersection isx;
-    return isx;
+Intersection Cube::SamplePoint(float a, float , Intersection isx) {
+    Intersection sp;
+    return sp;
 }
 
 glm::vec4 GetCubeNormal(const glm::vec4& P)
@@ -89,7 +89,7 @@ Intersection Cube::GetIntersection(Ray r)
         result.t = glm::distance(result.point, r.origin);
         result.texture_color = Material::GetImageColorInterp(GetUVCoordinates(glm::vec3(P)), material->texture);
         //store tangent/bitangent
-//        glm::vec3 world_u = glm::vec3(glm::normalize(this->transform.T()*glm::vec4(0.0f,1.0f,0.0f,0.0f)));
+//        glm::vec3 world_u = glm::vec3(glm::normalize(this->transform.invT()*glm::vec4(0.0f,1.0f,0.0f,0.0f)));
 //        result.tangent = glm::normalize(glm::cross(result.normal, world_u));
 //        result.bitangent = glm::normalize(glm::cross(result.tangent, result.normal));
         return result;

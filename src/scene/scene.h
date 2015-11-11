@@ -26,4 +26,6 @@ public:
 
     void CreateTestScene();
     void Clear();
+
+    unsigned seed;
 };

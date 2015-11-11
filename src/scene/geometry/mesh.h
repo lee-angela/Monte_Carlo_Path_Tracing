@@ -28,7 +28,8 @@ public:
     glm::vec4 GetNormal(const glm::vec4 &position);
 
     //not implemented as light source
-    virtual Intersection SamplePoint(float a, float b);
+    //isx = Intersection on non-light geom
+    virtual Intersection SamplePoint(float a, float b, Intersection isx);
 
 };
 
@@ -47,7 +48,7 @@ public:
     virtual void ComputeArea();
 
     //not implemented as light source
-    virtual Intersection SamplePoint(float a, float b);
+    virtual Intersection SamplePoint(float a, float b, Intersection isx);
 
 private:
     QList<Triangle*> faces;

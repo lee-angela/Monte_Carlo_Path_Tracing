@@ -15,7 +15,8 @@ void RenderThread::run()
         for(unsigned int X = x_start; X < x_end; X++)
         {
             glm::vec3 pixel_color;
-            QList<glm::vec2> samples = pixel_sampler.GetSamples(X, Y);
+            QList<glm::vec2> samples = pixel_sampler.GetSamples(X,Y);
+
             for(int i = 0; i < samples.size(); i++)
             {
                 Ray ray = camera->Raycast(samples[i]);
