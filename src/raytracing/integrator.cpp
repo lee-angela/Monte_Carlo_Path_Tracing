@@ -47,6 +47,7 @@ glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned i
     glm::vec3 brdf = isx.object_hit->material->SampleAndEvaluateScatteredEnergy(isx,wi,wj,bxdf_pdf,BSDF_ALL);
     glm::vec3 Li = lightSample.object_hit->material->EvaluateScatteredEnergy(lightSample,-wj,-wj,BSDF_ALL); //light radiance
 
+ //CALCULATE LIGHT MIS
     //flip the direction of light_feeler ray that is used to calculate the pdf of light
     Ray pdfLightRay = Ray(isx.point, glm::normalize(lightSample.point-isx.point));
 
@@ -55,7 +56,7 @@ glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned i
     float light_pdf = lightSample.object_hit->RayPDF(lightSample, pdfLightRay);
 
     //find power heuristic
-    float pwr_heuristic = glm::pow(light_pdf, 2)/ (glm::pow(light_pdf, 2) + glm::pow(bxdf_pdf,2));
+    float light_pwr_heuristic = glm::pow(light_pdf, 2)/ (glm::pow(light_pdf, 2) + glm::pow(bxdf_pdf,2));
 
     //test for shadows
     Intersection obstruction;
@@ -70,8 +71,14 @@ glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned i
         Li = glm::vec3(0.0f,0.0f,0.0f);
     }
 
-    if (pwr_heuristic > 0.0001f) {
+
+  //CALCULATE BRDF MIS
+    isx.object_hit->material->SampleAndEvaluateScatteredEnergy(isx,);
+
+
+    if (light_pwr_heuristic > 0.0001f) {
         glm::vec3 Ld = brdf * Li * glm::abs(glm::dot(wj, isx.normal))/pwr_heuristic;
+
         return Ld;
     }
     else {
@@ -79,12 +86,6 @@ glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned i
     }
 }
 
-glm::mat4 createTransfMat(Intersection &isx) {
-    glm::mat4 tranfMat = glm::mat4(glm::vec4(isx.tangent,0.0f),
-                                   glm::vec4(isx.bitangent,0.0f),
-                                   glm::vec4(isx.normal,0.0f));
-
-}
 
 glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned int &samples_taken) {
     // specular reflective - will not be seen by direct lighting because there is 0 probability that the sampled ray
@@ -106,8 +107,6 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
         float pdf_ret;
 
         //transform the wo and wi to local space before sending to evaluateEnergy functions
-
-
         isx.object_hit->material->SampleAndEvaluateScatteredEnergy(isx,woW,sampled_wi,pdf_ret, BSDF_ALL);
         for (int i = 0; i < this->scene->lights.size(); i++) {
             Intersection light_isx = this->scene->lights[i]->GetIntersection(Ray(isx.point, sampled_wi));
@@ -121,6 +120,10 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
     }
 
     //light estimation loop
+    //during iteration, keep track of all comps of LTE except for the Li (light) (energy is multiplicative)
+    //this calculates all the things that are touched/light carried throughout scene
+    //at end of iterations, if hits light, Li = light.ESE (just multiply into the rest of LTE eq that was kept track of)
+    // if hits nothing, Li = 0, ends in darkness
     while (true) {
         depth++;
         if (depth >= max_depth) {
@@ -145,6 +148,9 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
         }
 
         //if this iteration NOT filtered with Russian Roulette, then continue to find the indirect lighting
+
+        //redefined sampled_wi to use in next iteration
+        sampled_wi = ;
 
 
     }

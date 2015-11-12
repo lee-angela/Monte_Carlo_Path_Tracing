@@ -7,7 +7,7 @@ glm::vec3 SpecularReflectionBxDF::EvaluateScatteredEnergy(const glm::vec3 &wo, c
 }
 
 
-glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const
+glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(Intersection isx, const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const
 {
     glm::vec3 norm = glm::vec3(0.0f,1.0f,0.0f);
     glm::vec3 wo_norm = glm::normalize(wo);

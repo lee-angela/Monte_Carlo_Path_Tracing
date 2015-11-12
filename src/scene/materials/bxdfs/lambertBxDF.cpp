@@ -8,7 +8,7 @@ glm::vec3 LambertBxDF::EvaluateScatteredEnergy(const glm::vec3 &wo, const glm::v
 }
 
 
-glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const
+glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(Intersection isx, const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const
 {
     //sample random point on hemisphere using Malley's method:
     glm::vec3 discPt = UnifSampleDisc(rand1, rand2);
@@ -28,7 +28,7 @@ glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 
     glm::vec3 energy = EvaluateScatteredEnergy(wo,discPt);
 
     wi_ret = discPt;
-    pdf_ret = 1/PI;
+    pdf_ret = glm::cos(theta)/PI;
     return energy;
 }
 
