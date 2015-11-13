@@ -8,36 +8,55 @@ glm::vec3 BlinnMicrofacetBxDF::EvaluateScatteredEnergy(const glm::vec3 &wo, cons
     return this->reflection_color;
 }
 
+float BlinnMicrofacetBxDF::PDF(const glm::vec3 &wo, const glm::vec3 &wi) const {
+    //wo and wi must be in local space
 
-glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(Intersection isx, const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const
+    float scale=RAND_MAX+1.;
+    float base=rand()/scale;
+    float fine=rand()/scale;
+    float rand1= (base+fine)/scale;
+    base=rand()/scale;
+    fine=rand()/scale;
+    float rand2 = (base+fine)/scale;
+
+    //sample half-angle vector wh
+    float costheta = glm::pow(rand1, 1/(exponent+1));
+    float sintheta = glm::sqrt(glm::max(0.0f, 1.0f-costheta*costheta));
+    float phi = rand2*2.0f*PI;
+    glm::vec3 wh = glm::vec3(sintheta*glm::cos(phi), sintheta*glm::sin(phi), costheta);
+
+    if (!(wo[2]*wh[2] > 0.0f)) {
+        wh = -wh;
+    }
+    //compute pdf for wi from blinn distribution
+   float pdf_ret = ((exponent+1.0f)*glm::pow(costheta, exponent)) / (2.0f*PI*4.0f*glm::dot(wo,wh));
+    if (glm::dot(wo, wh) <= 0.0f) {
+        pdf_ret = 0.0f;
+    }
+    return pdf_ret;
+}
+
+glm::vec3 BlinnMicrofacetBxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret,float rand1, float rand2, float &pdf_ret, BxDFType flags) const
 { // use Torrance-Sparrow model
 
-    //change vectors from world->local space
-    glm::mat4 worldToLocal = glm::mat4(glm::vec4(isx.tangent,0.0f),
-                                    glm::vec4(isx.bitangent,0.0f),
-                                    glm::vec4(isx.normal,0.0f),
-                                    glm::vec4(0.0f, 0.0f,0.0f,1.0f));
-    glm::vec3 local_wo = glm::vec3(worldToLocal*glm::vec4(vec,0.0f));
+    //sample half-angle vector wh
+    float costheta = glm::pow(rand1, 1/(exponent+1));
+    float sintheta = glm::sqrt(glm::max(0.0f, 1.0f-costheta*costheta));
+    float phi = rand2*2.0f*PI;
+    glm::vec3 wh = glm::vec3(sintheta*glm::cos(phi), sintheta*glm::sin(phi), costheta);
 
+    if (!(wo[2]*wh[2] > 0.0f)) {
+        wh = -wh;
+    }
 
-    glm::vec3 norm = glm::vec3(0.0f,1.0f,0.0f);
-    //sample direction H that microfacet is facing
-    glm::vec3 H = glm::vec3(0.0f);
+    //compute incident direction by reflecting about wh
+    wi_ret = -wo + 2.0f*glm::dot(wo, wh)*wh; //currently in local space
 
-    //change wo and wi to make H the local y axis
-    glm::mat4 transf = glm::mat4();
-    wi_ret = glm::vec3(transf*glm::vec4(0.0f));
-    glm::vec3 energy = EvaluateScatteredEnergy(wo,wi_ret);
+    //compute pdf for wi from blinn distribution
+    pdf_ret = ((exponent+1.0f)*glm::pow(costheta, exponent)) / (2.0f*PI*4.0f*glm::dot(wo,wh));
+    if (glm::dot(wo, wh) <= 0.0f) {
+        pdf_ret = 0.0f;
+    }
 
-    //calculate distribution that microfacet will be in H direction
-    float dotted = glm::dot(H, norm);
-    float D = (exponent + 2) / (2*PI*glm::pow(dotted, exponent));
-
-    wi_ret = glm::vec3(0.0f); //currently in local space
-    //transform the wi_ret back to world space
-    glm::mat4 localToWorld = glm::transpose(worldToLocal);
-    wi_ret = localToWorld*wi_ret;
-
-    pdf_ret = ;
-    return glm::vec3(0);
+    return EvaluateScatteredEnergy(wo, wi_ret);
 }

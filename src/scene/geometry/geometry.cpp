@@ -27,7 +27,7 @@ float Geometry::RayPDF(const Intersection &isx, const Ray &ray)
     //solve for THETA
     float theta = glm::acos(val);
     float r = glm::distance(isx.point,ray.origin); //dist between light point & geom intersected
-    return r*r/(glm::cos(theta)*this->area);
+    return glm::min(1.0f,r*r/(glm::cos(theta)*this->area));
 
 }
 

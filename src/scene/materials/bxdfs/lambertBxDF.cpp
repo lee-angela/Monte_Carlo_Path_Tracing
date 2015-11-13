@@ -7,8 +7,49 @@ glm::vec3 LambertBxDF::EvaluateScatteredEnergy(const glm::vec3 &wo, const glm::v
     return this->diffuse_color/PI;
 }
 
+glm::vec3 UnifSampleDisc(float u1, float u2)
+{
+    float sx = 2 * u1 - 1.0f;
+    float sy = 2 * u2 - 1.0f;
+    float r, theta;
 
-glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(Intersection isx, const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const
+    if (sx == 0.0 && sy == 0.0) {
+        return glm::vec3(0,0,0);
+    }
+    if (sx >= -sy){
+        if (sx > sy){
+            // Handle first region of disk
+            r = sx;
+            if (sy > 0.0) theta = sy/r;
+            else          theta = 8.0f + sy/r;
+        } else{
+            // Handle second region of disk
+            r = sy;
+            theta = 2.0f - sx/r;
+        }
+    } else{
+        if (sx <= sy){
+            // Handle third region of disk
+            r = -sx;
+            theta = 4.0f - sy/r;
+        }else{
+            // Handle fourth region of disk
+            r = -sy;
+            theta = 6.0f + sx/r;
+        }
+    }
+    theta *= PI / 4.f;
+    float dx = r * cosf(theta);
+    float dy = r * sinf(theta);
+    return glm::vec3(dx, dy, 0);
+}
+
+float LambertBxDF::PDF(const glm::vec3 &wo, const glm::vec3 &wi) const {
+    float theta = glm::dot(wo, glm::vec3(0.0f,0.0f,1.0f));
+    return glm::cos(theta)/PI;
+}
+
+glm::vec3 LambertBxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret, BxDFType flags) const
 {
     //sample random point on hemisphere using Malley's method:
     glm::vec3 discPt = UnifSampleDisc(rand1, rand2);
@@ -27,54 +68,9 @@ glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(Intersection isx, const glm::ve
     //find hemisphere sampled pt & ray, send to EvaluateScatteredEnergy()
     glm::vec3 energy = EvaluateScatteredEnergy(wo,discPt);
 
-    wi_ret = discPt;
-    pdf_ret = glm::cos(theta)/PI;
+    wi_ret = glm::normalize(discPt);
+    pdf_ret = PDF(wo,wi_ret);
     return energy;
 }
 
-glm::vec3 UnifSampleDisc(float u1, float u2)
-{
-    float sx = 2 * u1 - 1.0f;
-    float sy = 2 * u2 - 1.0f;
-    float r, theta;
 
-    if (sx == 0.0 && sy == 0.0)
-    {
-        return glm::vec3(0,0,0);
-    }
-    if (sx >= -sy)
-    {
-        if (sx > sy)
-        {
-            // Handle first region of disk
-            r = sx;
-            if (sy > 0.0) theta = sy/r;
-            else          theta = 8.0f + sy/r;
-        }
-        else
-        {
-            // Handle second region of disk
-            r = sy;
-            theta = 2.0f - sx/r;
-        }
-    }
-    else
-    {
-        if (sx <= sy)
-        {
-            // Handle third region of disk
-            r = -sx;
-            theta = 4.0f - sy/r;
-        }
-        else
-        {
-            // Handle fourth region of disk
-            r = -sy;
-            theta = 6.0f + sx/r;
-        }
-    }
-    theta *= PI / 4.f;
-    float dx = r * cosf(theta);
-    float dy = r * sinf(theta);
-    return glm::vec3(dx, dy, 0);
-}

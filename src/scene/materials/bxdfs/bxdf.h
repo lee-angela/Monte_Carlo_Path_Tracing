@@ -35,7 +35,7 @@ public:
 
     //This generates an incoming light direction wi based on rand1 and rand2 and returns the result of EvaluateScatteredEnergy based on wi.
     //It "returns" wi by storing it in the supplied reference to wi. Likewise, it "returns" the value of its PDF given wi and wo in the reference to pdf.
-    virtual glm::vec3 SampleAndEvaluateScatteredEnergy(Intersection isx, const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const;
+    virtual glm::vec3 SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret, BxDFType flags) const;
 
     //Given a set of pairs of random numbers (samples), create N sample points on the hemisphere and evaluate the BxDF given wo and each of these sampled wi.
     //Equivalent to the RHO term in Monte Carlo path tracing

@@ -2,16 +2,17 @@
 
 glm::vec3 SpecularReflectionBxDF::EvaluateScatteredEnergy(const glm::vec3 &wo, const glm::vec3 &wi) const
 {
-    //should be light color?
     return this->reflection_color; //perfectly specular will always reflect in direction of sampled wi!
 }
 
+float SpecularReflectionBxDF::PDF(const glm::vec3 &wo, const glm::vec3 &wi) const{
+    return 1.0f;
+}
 
-glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(Intersection isx, const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const
+glm::vec3 SpecularReflectionBxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret, BxDFType flags) const
 {
     glm::vec3 norm = glm::vec3(0.0f,1.0f,0.0f);
-    glm::vec3 wo_norm = glm::normalize(wo);
-    wi_ret = glm::normalize(wo_norm - 2*(glm::dot(wo_norm, norm))*norm);
+    wi_ret = glm::normalize(wo - 2*(glm::dot(wo, norm))*norm);
     pdf_ret = 1.0f;
-    return glm::vec3(0);
+    return EvaluateScatteredEnergy(wo,wi_ret);
 }

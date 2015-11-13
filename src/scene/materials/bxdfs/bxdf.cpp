@@ -1,6 +1,6 @@
 #include <scene/materials/bxdfs/bxdf.h>
 
-glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret) const
+glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret, BxDFType flags) const
 {
     //TODO
     wi_ret = glm::vec3(0);
@@ -8,7 +8,7 @@ glm::vec3 BxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 
     return glm::vec3(0);
 }
 
-glm::vec3 BxDF::EvaluateHemisphereScatteredEnergy(Intersection isx, const glm::vec3 &wo, int num_samples, const glm::vec2* samples) const
+glm::vec3 BxDF::EvaluateHemisphereScatteredEnergy(const glm::vec3 &wo, int num_samples, const glm::vec2* samples) const
 {
     //TODO
     return glm::vec3(0);

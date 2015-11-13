@@ -200,6 +200,8 @@ void MyGL::RaytraceScene()
         return;
     }
 
+    glm::vec3 test = integrator.TraceRay(this->scene.camera.Raycast(206,177), 0);
+
 #define MULTITHREADED
 #ifdef MULTITHREADED
     //Set up 16 (max) threads

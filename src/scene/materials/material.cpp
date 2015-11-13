@@ -17,39 +17,48 @@ Material::Material(const glm::vec3 &color):
     normal_map = NULL;
 }
 
+float generate_rand() {
+    float scale=RAND_MAX+1.;
+    float base=rand()/scale;
+    float fine=rand()/scale;
+    return base+fine/scale;
+}
 
 
 
-glm::vec3 Material::EvaluateScatteredEnergy(const Intersection &isx, const glm::vec3 &woW, const glm::vec3 &wiW, BxDFType flags) const
+glm::vec3 Material::EvaluateHemisphereScatteredEnergy(const Intersection &isx, const glm::vec3 &wo, int num_samples, BxDFType flags) const{
+}
+
+glm::vec3 Material::EvaluateScatteredEnergy(const Intersection &isx, const glm::vec3 &woW, const glm::vec3 &wiW, int &bxdf_idx, BxDFType flags) const
 {
-    int random;
+    glm::vec3 local_wo = woW;
+    glm::vec3 local_wi = wiW;
     if (this->bxdfs.count() == 1) {
-        random = 0;
+        bxdf_idx = 0;
     } else {
-        random = rand()%(this->bxdfs.count()-1); //rand number between 0 and the length of bxdf list
+        bxdf_idx = rand()%(this->bxdfs.count()-1); //rand number between 0 and the length of bxdf list
     }
-    return isx.texture_color * isx.object_hit->material->base_color * bxdfs[random]->EvaluateScatteredEnergy(woW, wiW);
+    if (!this->is_light_source) {
+        return isx.texture_color * isx.object_hit->material->base_color * bxdfs[bxdf_idx]->EvaluateScatteredEnergy(local_wo, local_wi);
+    } else {
+        return isx.texture_color * isx.object_hit->material->base_color;
+    }
 }
 
-glm::vec3 Material::SampleAndEvaluateScatteredEnergy(const Intersection &isx, const glm::vec3 &woW, glm::vec3 &wiW_ret, float &pdf_ret, BxDFType flags) const
+glm::vec3 Material::SampleAndEvaluateScatteredEnergy(Intersection isx, const glm::vec3 &woW, glm::vec3 &wiW_ret, float &pdf_ret, BxDFType flags) const
 {
-    //TODO
-    wiW_ret = glm::vec3(0);
+    //convert vecs to local space
+    glm::vec3 local_wo = woW;
     pdf_ret = 0.0f;
-    return glm::vec3(0);
+
+    //generate random bxdf to sample with
+    int random = rand()%this->bxdfs.size();
+
+    //evaluate energy of this particular bxdf
+    return this->bxdfs[random]->SampleAndEvaluateScatteredEnergy(
+                local_wo, wiW_ret, generate_rand(), generate_rand(), pdf_ret, BSDF_ALL);
+
 }
-
-glm::vec3 Material::EvaluateHemisphereScatteredEnergy(const Intersection &isx, const glm::vec3 &wo, int num_samples, BxDFType flags) const
-{
-    //TODO
-    return glm::vec3(0);
-}
-
-
-
-
-
-
 
 
 glm::vec3 Material::GetImageColor(const glm::vec2 &uv_coord, const QImage* const& image)
