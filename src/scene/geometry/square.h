@@ -11,7 +11,9 @@ class SquarePlane : public Geometry
     void create();
 
     virtual void ComputeArea();
+    void setBoundingBox();
 
     //isx = Intersection on non-light geom
     virtual Intersection SamplePoint(float a, float b, Intersection isx);
+    bool isMesh();
 };

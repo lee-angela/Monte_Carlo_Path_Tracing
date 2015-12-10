@@ -14,13 +14,15 @@ public:
     const glm::mat4 &invTransT();
 
     const glm::vec3 &position();
+    const glm::vec3 &getScale();
 
-private:
+private:  glm::vec3 scale;
     glm::vec3 translation;
     glm::vec3 rotation;
-    glm::vec3 scale;
+
 
     glm::mat4 worldTransform;
     glm::mat4 inverse_worldTransform;
     glm::mat4 inverse_transpose_worldTransform;
+
 };

@@ -44,13 +44,19 @@ public:
     void paintGL();
 
     void SceneLoadDialog();
+    void drawBoxes(BVHnode* node); //added to help draw bvh nodes' bounding boxes
     void GLDrawScene();
     void ResizeToSceneCamera();
 
     void RaytraceScene();
 
+    BVHnode* createBVHtree(BVHnode* root, QList<Geometry*> objs, int depth);
+    void drawTriangles(BVHnode* meshNode, int depth);
+
 protected:
     void keyPressEvent(QKeyEvent *e);
+    void timer_slot();
+
 
 signals:
     void sig_ResizeToCamera(int,int);

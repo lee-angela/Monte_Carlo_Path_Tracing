@@ -10,9 +10,11 @@ public:
     virtual glm::vec2 GetUVCoordinates(const glm::vec3 &point);
     virtual glm::vec3 ComputeNormal(const glm::vec3 &P);
     void create();
+    void setBoundingBox();
 
     virtual void ComputeArea();
 
     //isx = Intersection on non-light geom
     virtual Intersection SamplePoint(float a, float b, Intersection isx);
+    bool isMesh();
 };

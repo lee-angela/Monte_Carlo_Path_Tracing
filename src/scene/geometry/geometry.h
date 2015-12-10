@@ -5,10 +5,13 @@
 #include <openGL/drawable.h>
 #include <raytracing/ray.h>
 #include <scene/transform.h>
+#include <scene/geometry/BoundingBox.h>
 #include <math.h>
 
 class Material;
 class Intersection;
+class BoundingBox;
+
 
 //Geometry is an abstract class since it contains a pure virtual function (i.e. a virtual function that is set to 0)
 class Geometry : public Drawable
@@ -18,6 +21,8 @@ public:
     Geometry() : name("GEOMETRY"), transform()
     {
         material = NULL;
+        boundingBox = NULL;
+
     }
 //Functions
     virtual ~Geometry(){}
@@ -25,6 +30,8 @@ public:
     virtual void SetMaterial(Material* m){material = m;}
     virtual glm::vec2 GetUVCoordinates(const glm::vec3 &point) = 0;
     virtual glm::vec3 ComputeNormal(const glm::vec3 &P) = 0;
+    virtual void setBoundingBox()=0;
+
 
     //Returns the solid-angle weighted probability density function given a point we're trying to illuminate and
     //a ray going towards the Geometry (leaving light)
@@ -48,4 +55,9 @@ public:
     Transform transform;
     Material* material;
     float area;
+    BoundingBox* boundingBox;
+
+
+    virtual bool isMesh()=0;
+
 };

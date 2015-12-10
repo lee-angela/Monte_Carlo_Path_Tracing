@@ -14,8 +14,12 @@ public:
     void create();
 
     virtual void ComputeArea();
+    void setBoundingBox();
+
 
     //not implemented as light source
     //isx = Intersection on non-light geom
     virtual Intersection SamplePoint(float a, float b, Intersection isx);
+    float RayPDF(const Intersection &isx, const Ray &ray);
+    bool isMesh();
 };

@@ -11,8 +11,9 @@ float SpecularReflectionBxDF::PDF(const glm::vec3 &wo, const glm::vec3 &wi) cons
 
 glm::vec3 SpecularReflectionBxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm::vec3 &wi_ret, float rand1, float rand2, float &pdf_ret, BxDFType flags) const
 {
+    glm::vec3 local_wo = -wo;
     glm::vec3 norm = glm::vec3(0.0f,1.0f,0.0f);
-    wi_ret = glm::normalize(wo - 2*(glm::dot(wo, norm))*norm);
+    wi_ret = glm::normalize(local_wo - 2*(glm::dot(local_wo, norm))*norm);
     pdf_ret = 1.0f;
-    return EvaluateScatteredEnergy(wo,wi_ret);
+    return EvaluateScatteredEnergy(local_wo,wi_ret);
 }

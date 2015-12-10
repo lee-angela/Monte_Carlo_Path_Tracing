@@ -89,9 +89,9 @@ Intersection Cube::GetIntersection(Ray r)
         result.t = glm::distance(result.point, r.origin);
         result.texture_color = Material::GetImageColorInterp(GetUVCoordinates(glm::vec3(P)), material->texture);
         //store tangent/bitangent
-//        glm::vec3 world_u = glm::vec3(glm::normalize(this->transform.invT()*glm::vec4(0.0f,1.0f,0.0f,0.0f)));
-//        result.tangent = glm::normalize(glm::cross(result.normal, world_u));
-//        result.bitangent = glm::normalize(glm::cross(result.tangent, result.normal));
+        //        glm::vec3 world_u = glm::vec3(glm::normalize(this->transform.invTransT()*glm::vec4(0.0f,1.0f,0.0f,0.0f)));
+        //        result.tangent = glm::normalize(transform.invTransT()*glm::cross(result.normal, world_u));
+        //        result.bitangent = glm::normalize(transform.invTransT()*glm::cross(result.tangent, result.normal));
         return result;
     }
     else{//If t_near was greater than t_far, we did not hit the cube
@@ -291,4 +291,23 @@ void Cube::create()
     bufCol.setUsagePattern(QOpenGLBuffer::StaticDraw);
     bufCol.allocate(cub_vert_col, CUB_VERT_COUNT * sizeof(glm::vec3));
 
+    this->boundingBox = new BoundingBox();
+    setBoundingBox();
+}
+
+/**
+ * @brief Cube::setBoundingBox
+ * @brief called from after this.transform is defined
+ * @brief and TRANSFORMED (max x, max y, max z)
+ *
+ * @param cub_vert_pos (vertex positions of cubes)
+ */
+void Cube::setBoundingBox() {
+    this->boundingBox->setTransformedBox(this->transform.T());
+    boundingBox->create();
+}
+
+
+bool Cube::isMesh(){
+    return false;
 }

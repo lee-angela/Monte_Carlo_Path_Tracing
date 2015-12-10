@@ -34,7 +34,9 @@ SOURCES += \
     $$PWD/renderthread.cpp \
     $$PWD/scene/geometry/geometry.cpp \
     $$PWD/scene/materials/bxdfs/blinnmicrofacetbxdf.cpp \
-    $$PWD/scene/materials/bxdfs/specularreflectionbxdf.cpp
+    $$PWD/scene/materials/bxdfs/specularreflectionbxdf.cpp \
+    $$PWD/raytracing/bvhnode.cpp \
+    $$PWD/scene/geometry/boundingbox.cpp
 
 HEADERS += \
     $$PWD/mainwindow.h \
@@ -74,4 +76,6 @@ HEADERS += \
     $$PWD/renderthread.h \
     $$PWD/raytracing/intersectionengine.h \
     $$PWD/scene/materials/bxdfs/blinnmicrofacetbxdf.h \
-    $$PWD/scene/materials/bxdfs/specularreflectionbxdf.h
+    $$PWD/scene/materials/bxdfs/specularreflectionbxdf.h \
+    $$PWD/raytracing/bvhnode.h \
+    $$PWD/scene/geometry/boundingbox.h

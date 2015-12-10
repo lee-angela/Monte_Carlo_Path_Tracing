@@ -14,6 +14,8 @@ public:
     virtual glm::vec3 ComputeNormal(const glm::vec3 &P);
 
     virtual void ComputeArea();
+    void setBoundingBox();
+
 
     glm::vec3 points[3];
     glm::vec3 normals[3];
@@ -21,15 +23,17 @@ public:
     glm::vec3 plane_normal;
 
     void create();//This does nothing because individual triangles are not rendered with OpenGL;
-                            //they are rendered all together in their Mesh.
+    //they are rendered all together in their Mesh.
 
     glm::vec3 GetNormal(const glm::vec3 &position);//Returns the interpolation of the triangle's three normals
-                                                    //based on the point inside the triangle that is given.
+    //based on the point inside the triangle that is given.
     glm::vec4 GetNormal(const glm::vec4 &position);
 
     //not implemented as light source
     //isx = Intersection on non-light geom
     virtual Intersection SamplePoint(float a, float b, Intersection isx);
+
+    bool isMesh();
 
 };
 
@@ -38,6 +42,7 @@ public:
 class Mesh : public Geometry
 {
 public:
+    ~Mesh();
     Intersection GetIntersection(Ray r);
     void SetMaterial(Material *m);
     void create();
@@ -46,9 +51,17 @@ public:
     virtual glm::vec3 ComputeNormal(const glm::vec3 &P);
 
     virtual void ComputeArea();
+    void setBoundingBox();
+
 
     //not implemented as light source
     virtual Intersection SamplePoint(float a, float b, Intersection isx);
+
+    bool isMesh();
+
+    BVHnode* MeshRootBVHnode;
+    BVHnode* createMeshBVHTree(BVHnode* node, QList<Triangle*> faces, int depth);
+    Intersection traverseMeshBVHTree(BVHnode* node, Ray r);
 
 private:
     QList<Triangle*> faces;

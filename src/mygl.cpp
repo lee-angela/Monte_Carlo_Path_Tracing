@@ -1,5 +1,6 @@
 #include "mygl.h"
 #include <la.h>
+#include "raytracing/intersection.h"
 
 #include <iostream>
 #include <QApplication>
@@ -7,8 +8,12 @@
 #include <QXmlStreamReader>
 #include <QFileDialog>
 #include <renderthread.h>
+//#include <tbb/tbb.h>
+#include <QElapsedTimer>
 #include <raytracing/samplers/stratifiedpixelsampler.h>
+#include <scene/geometry/mesh.h>
 
+//using namespace tbb;
 
 MyGL::MyGL(QWidget *parent)
     : GLWidget277(parent)
@@ -61,6 +66,11 @@ void MyGL::initializeGL()
     integrator.intersection_engine = &intersection_engine;
     intersection_engine.scene = &scene;
     ResizeToSceneCamera();
+
+    //create new tree with this new set of geometry!
+    this->intersection_engine.BVHrootNode = new BVHnode();
+    this->intersection_engine.BVHrootNode = createBVHtree(this->intersection_engine.BVHrootNode, this->scene.objects, 0);
+    update();
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -89,6 +99,42 @@ void MyGL::paintGL()
     GLDrawScene();
 }
 
+void MyGL::drawTriangles(BVHnode* meshNode, int depth) {
+
+    if ((depth % 5) == 0) {
+        prog_flat.setModelMatrix(meshNode->boundingBox->transformation);
+        prog_flat.draw(*this, *meshNode->boundingBox);
+    }
+    //recurse and draw children's boxes
+    if(meshNode->leftChild != NULL) {
+        drawTriangles(meshNode->leftChild, depth+1);
+    }
+    if (meshNode->rightChild != NULL) {
+        drawTriangles(meshNode->rightChild, depth+1);
+    }
+}
+
+/**
+ * @brief drawBVHnodes
+ * @brief Helper function that draws BVHnodes
+ */
+void MyGL::drawBoxes(BVHnode* node) {
+    if (node->geom != NULL && node->geom->isMesh()) {
+        drawTriangles(((Mesh*)node->geom)->MeshRootBVHnode, 0);
+    }
+
+    prog_flat.setModelMatrix(node->boundingBox->transformation);
+    prog_flat.draw(*this, *node->boundingBox);
+
+    //recurse and draw children's boxes
+    if(node->leftChild != NULL) {
+        drawBoxes(node->leftChild);
+    }
+    if (node->rightChild != NULL) {
+        drawBoxes(node->rightChild);
+    }
+}
+
 void MyGL::GLDrawScene()
 {
     for(Geometry *g : scene.objects)
@@ -113,6 +159,8 @@ void MyGL::GLDrawScene()
     prog_flat.draw(*this, scene.camera);
 
     //Recursively traverse the BVH hierarchy stored in the intersection engine and draw each node
+    drawBoxes(this->intersection_engine.BVHrootNode);
+
 }
 
 void MyGL::ResizeToSceneCamera()
@@ -165,6 +213,101 @@ void MyGL::keyPressEvent(QKeyEvent *e)
     update();  // Calls paintGL, among other things
 }
 
+void clearTree(BVHnode* root) {
+    if (root == NULL) {
+        return;
+    } else {
+        if (root->leftChild != NULL) {
+            clearTree(root->leftChild);
+        }
+        if (root->rightChild != NULL) {
+            clearTree(root->rightChild);
+        }
+    }
+    root->~BVHnode();
+}
+
+
+/**
+ * @brief compareXcoords
+ * @brief Helper function used for sorting geometry on their bounding box X coords
+ * @param a
+ * @param b
+ * @return -1 if a[x]<=b[x] and 1 if a[x]>b[x]
+ */
+int compareXcoords(const Geometry * a, const Geometry * b) {
+    if (a->boundingBox->maxBound[0] <= b->boundingBox->maxBound[0]) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
+int compareYcoords(const Geometry * a, const Geometry * b) {
+    if (a->boundingBox->maxBound[1] <= b->boundingBox->maxBound[1]) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
+int compareZcoords(const Geometry* a, const Geometry* b) {
+    if (a->boundingBox->maxBound[2] <= b->boundingBox->maxBound[2]) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
+
+/**
+ * @brief MyGL::createBVHtree
+ * @brief recursively splits the objects in geometry evenly (along x/y axis) depending on depth
+ * @param root
+ * @param objs
+ * @param depth
+ * @return the root BVHnode of the subtree that is being created
+ */
+BVHnode* MyGL::createBVHtree(BVHnode* root, QList<Geometry*> objs, int depth) {
+
+    //if there is only 1 geometry object left in this node, then it is a leaf
+    if (objs.count() <= 1) {
+        //set the bounding box of the geometry equal to this leaf bvh node
+        return new BVHnode(NULL, NULL, objs[0]->boundingBox, objs[0]);
+
+    }
+
+    //get overall boundingBox for all remaining objects in this node
+    for (int i = 0; i < objs.count(); i++) {
+        //keep adding on bounding boxes of each obj to the overall bbox
+        root->boundingBox->combineBoxes(objs[i]->boundingBox);
+    }
+
+    //find which axis to divide objects along
+    if (glm::mod(depth, 3) == 0) { //multiple of 3 : split along x axis
+        //sort according to x coords
+        std::sort(objs.begin(), objs.end(), compareXcoords);
+    } else if (glm::mod(depth, 3) == 1){ //non multiple of 3 : split along y axis
+        //sort according to y coords
+        std::sort(objs.begin(), objs.end(), compareYcoords);
+    } else { //glm::mod(depth, 3) == 2 : split along z axis
+        //sort according to z coords
+        std::sort(objs.begin(), objs.end(), compareZcoords);
+    }
+
+    //split the geometry objects according to appropriate coords
+    QList<Geometry*> leftHalfObjs(objs.mid(0,floor((float)objs.length()/2.0f)));
+    QList<Geometry*> rightHalfObjs(objs.mid(floor((float)objs.length()/2.0f), ceil((float)objs.length()/2.0f)));
+
+    root->leftChild = createBVHtree(new BVHnode(), leftHalfObjs, depth+1);
+    root->rightChild = createBVHtree(new BVHnode(), rightHalfObjs, depth+1);
+
+    root->boundingBox->create();
+    return root;
+}
+
+
+
 void MyGL::SceneLoadDialog()
 {
     QString filepath = QFileDialog::getOpenFileName(0, QString("Load Scene"), QString("../scene_files"), tr("*.xml"));
@@ -183,12 +326,23 @@ void MyGL::SceneLoadDialog()
     //Reset all of our objects
     scene.Clear();
     integrator = Integrator();
+
+    //delete existing bvh tree
+    clearTree(this->intersection_engine.BVHrootNode);
+    delete this->intersection_engine.BVHrootNode;
+
     intersection_engine = IntersectionEngine();
+
     //Load new objects based on the XML file chosen.
     xml_reader.LoadSceneFromFile(file, local_path, scene, integrator);
     integrator.scene = &scene;
     integrator.intersection_engine = &intersection_engine;
     intersection_engine.scene = &scene;
+
+    //create new tree with this new set of geometry!
+    this->intersection_engine.BVHrootNode = new BVHnode();
+    this->intersection_engine.BVHrootNode = createBVHtree(this->intersection_engine.BVHrootNode, this->scene.objects, 0);
+
     update();
 }
 
@@ -200,7 +354,7 @@ void MyGL::RaytraceScene()
         return;
     }
 
-    glm::vec3 test = integrator.TraceRay(this->scene.camera.Raycast(206,177), 0);
+    glm::vec3 test = integrator.TraceRay(this->scene.camera.Raycast(216, 274), 0);
 
 #define MULTITHREADED
 #ifdef MULTITHREADED
@@ -217,6 +371,12 @@ void MyGL::RaytraceScene()
     unsigned int num_render_threads = x_block_count * y_block_count;
     RenderThread **render_threads = new RenderThread*[num_render_threads];
 
+    //start Qtimer
+
+    QElapsedTimer timer;
+    timer.start();
+
+
     //Launch the render threads we've made
     for(unsigned int Y = 0; Y < y_block_count; Y++)
     {
@@ -229,7 +389,7 @@ void MyGL::RaytraceScene()
             unsigned int x_start = X * x_block_size;
             unsigned int x_end = glm::min((X + 1) * x_block_size, width);
             //Create and run the thread
-            render_threads[Y * x_block_count + X] = new RenderThread(x_start, x_end, y_start, y_end, 10, 5, &(scene.film), &(scene.camera), &(integrator));
+            render_threads[Y * x_block_count + X] = new RenderThread(x_start, x_end, y_start, y_end, 1, 5, &(scene.film), &(scene.camera), &(integrator));
             render_threads[Y * x_block_count + X]->start();
         }
     }
@@ -278,5 +438,10 @@ void MyGL::RaytraceScene()
         }
     }
 #endif
+
+    //stop Qtimer
+    qDebug()<<"this raytrace took "<<timer.elapsed()<<"milliseconds";
+
+
     scene.film.WriteImage(filepath);
 }

@@ -41,3 +41,12 @@ const glm::vec3& Transform::position()
 {
     return translation;
 }
+
+const glm::vec3& Transform::getScale() {
+    return scale;
+}
+
+
+
+
+

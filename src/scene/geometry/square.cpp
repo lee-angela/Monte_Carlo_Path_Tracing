@@ -39,15 +39,17 @@ Intersection SquarePlane::GetIntersection(Ray r)
     //Check that P is within the bounds of the square
     if(t > 0 && P.x >= -0.5f && P.x <= 0.5f && P.y >= -0.5f && P.y <= 0.5f)
     {
+        glm::vec3 normalL = glm::vec3(0.0f,0.0f,1.0f);
         result.point = glm::vec3(transform.T() * P);
-        result.normal = glm::normalize(glm::vec3(transform.invTransT() * glm::vec4(ComputeNormal(glm::vec3(P)), 0)));
+        result.normal = glm::normalize(glm::vec3(transform.invTransT() * glm::vec4(normalL, 0.0f)));
         result.object_hit = this;
         result.t = glm::distance(result.point, r.origin);
         result.texture_color = Material::GetImageColorInterp(GetUVCoordinates(glm::vec3(P)), material->texture);
         //TODO: Store the tangent and bitangent
-        glm::vec3 local_y = glm::normalize(glm::vec3(this->transform.invTransT()*glm::vec4(0.0f,1.0f,0.0f,0.0f)));
-        result.tangent = glm::normalize(glm::cross(local_y, result.normal));
-        result.bitangent = glm::normalize(glm::cross(result.normal, result.tangent));
+        glm::vec3 T = glm::normalize(glm::cross(glm::vec3(0.0f,1.0f,0.0f), normalL));
+        glm::vec3 B = glm::normalize(glm::cross(glm::vec3(normalL), T));
+        result.tangent = glm::normalize(glm::vec3(transform.invTransT()*glm::vec4(T,0.0f)));
+        result.bitangent = glm::normalize(glm::vec3(transform.invTransT()*glm::vec4(B, 0.0f)));
 
         return result;
     }
@@ -101,4 +103,24 @@ void SquarePlane::create()
     bufCol.bind();
     bufCol.setUsagePattern(QOpenGLBuffer::StaticDraw);
     bufCol.allocate(cub_vert_col, 4 * sizeof(glm::vec3));
+
+    this->boundingBox = new BoundingBox();
+    setBoundingBox();
+}
+
+/**
+ * @brief Cube::setBoundingBox
+ * @brief called from after this.transform is defined
+ * @brief and TRANSFORMED (max x, max y, max z)
+ *
+ * @param cub_vert_pos (vertex positions of cubes)
+ */
+void SquarePlane::setBoundingBox() {
+    this->boundingBox->setTransformedBox(this->transform.T());
+    boundingBox->create();
+}
+
+
+bool SquarePlane::isMesh() {
+    return false;
 }

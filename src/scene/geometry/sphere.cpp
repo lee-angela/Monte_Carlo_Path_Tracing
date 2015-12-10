@@ -9,53 +9,93 @@
 static const int SPH_IDX_COUNT = 2280;  // 760 tris * 3
 static const int SPH_VERT_COUNT = 382;
 
+
+
+float UniformConePdf(float cosThetaMax)
+{
+    return 1.f / (2.f * PI * (1.f - cosThetaMax));
+}
+
+float Sphere::RayPDF(const Intersection &isx, const Ray &ray) {
+    glm::vec3 Pcenter = transform.position();
+    float radius = 0.5f*(transform.getScale().x + transform.getScale().y + transform.getScale().z)/3.0f;
+    // Return uniform weight if point inside sphere
+    if (glm::distance2(isx.point, Pcenter) - radius*radius < 1e-4f)
+        return Geometry::RayPDF(isx, ray);
+
+    // Compute general sphere weight
+    float sinThetaMax2 = radius*radius / glm::distance2(isx.point, Pcenter);
+    float cosThetaMax = glm::sqrt(glm::max(0.f, 1.f - sinThetaMax2));
+    return UniformConePdf(cosThetaMax);
+}
+
+
 void Sphere::ComputeArea()
 {
-    //Extra credit to implement this
-    //A = 4 * PI * ( ( (ab)^p + (ac)^p + (bc)^p) )/3 )^{1/p} )
-
-    float p = 1.6075;
-
-    //find transformed a,b,and c:
-    glm::mat4 T = this->transform.T();
-    float a = glm::length(T*glm::vec4(0.5f,0.0f,0.0f,1.0f) - T*glm::vec4(0.0f,0.0f,0.0f,1.0f));
-    float b = glm::length(T*glm::vec4(0.0f,0.5f,0.0f,1.0f) - T*glm::vec4(0.0f,0.0f,0.0f,1.0f));
-    float c = glm::length(T*glm::vec4(0.0f,0.0f,0.5f,1.0f) - T*glm::vec4(0.0f,0.0f,0.0f,1.0f));
-
-    this->area = 4*PI*glm::pow(((glm::pow((a*b),p) + glm::pow((a*c),p) + glm::pow((b*c),p))/3), (1/p));
+    glm::vec3 scale = transform.getScale();
+    float a = scale.x*0.5f; float b = scale.y*0.5f; float c = scale.z*0.5f;
+    area = 4*PI*glm::pow((glm::pow(a*b, 1.6f) + glm::pow(a*c, 1.6f) + glm::pow(b*c, 1.6f))/3.0f, 1/1.6f);
 }
 
 Intersection Sphere::SamplePoint(float a, float b, Intersection isx) {
-    Intersection sampledPt;
-    sampledPt.normal = glm::vec3(0.0f,1.0f,0.0f);
-    glm::vec3 to_light = glm::vec3(0.0f,1.0f,0.0f);
 
-    while (glm::dot(to_light,sampledPt.normal) > 0) { //sample again if on backside of sphere
-        //generate another random number
-        float scale=RAND_MAX+1.;
-        float base=rand()/scale;
-        float fine=rand()/scale;
-        float rand1 = base+fine/scale;
-
-        float x = glm::sqrt(1-glm::pow(rand1,2))*glm::cos(2*PI*rand1);
-        float y = glm::sqrt(1-glm::pow(rand1,2))*glm::cos(2*PI*rand1);
-        float z = rand1;
-        glm::vec3 pt = glm::vec3(x,y,z); //pt on unit sphere
-
-        sampledPt = this->GetIntersection(Ray(glm::vec3(0.0f), glm::normalize(pt))); //intersects inside of sphere
-        //reverse direction of normal
-        sampledPt.normal = glm::normalize(sampledPt.point);
-        //offset the intersection pt
-        sampledPt.point = sampledPt.point + 0.0001f*sampledPt.normal;
-
-        to_light = glm::normalize(sampledPt.point - isx.point);
+    float z = 1.f - 2.f * a;
+    float r = glm::sqrt(glm::max(0.f, 1.f - z*z));
+    float phi = 2.f * PI * b;
+    float x = r * glm::cos(phi);
+    float y = r * glm::sin(phi);
+    glm::vec3 normal3 = glm::normalize(glm::vec3(x,y,z));
+    if(glm::dot(isx.normal, normal3) > 0)
+    {
+        normal3 = -normal3;
     }
+    glm::vec4 pointL(x, y, z, 1);
+    glm::vec4 normalL(normal3,0);
+    glm::vec2 uv = this->GetUVCoordinates(glm::vec3(pointL));
+    glm::vec3 color = Material::GetImageColor(uv, this->material->texture);
+    glm::vec3 T = glm::normalize(glm::cross(glm::vec3(0,1,0), glm::vec3(normalL)));
+    glm::vec3 B = glm::cross(glm::vec3(normalL), T);
 
-    //transform from local to world coords
-    sampledPt.point = glm::vec3(this->transform.T()*glm::vec4(isx.point,1.0f));
-    sampledPt.normal = glm::normalize(glm::vec3((this->transform.invTransT()*glm::vec4(isx.normal,0.0f))));
-    return sampledPt;
+    Intersection result;
+    result.point = glm::vec3(transform.T() * pointL);
+    result.normal = glm::normalize(glm::vec3(transform.invTransT() * normalL));
+    result.texture_color = color;
+    result.tangent = glm::normalize(glm::vec3(transform.invTransT() * glm::vec4(T, 0)));
+    result.bitangent = glm::normalize(glm::vec3(transform.invTransT() * glm::vec4(B, 0)));
+    result.object_hit = this;
+    return result;
+
 }
+//    Intersection sampledPt;
+//    sampledPt.normal = glm::vec3(0.0f,1.0f,0.0f);
+//    glm::vec3 to_light = glm::vec3(0.0f,1.0f,0.0f);
+
+//    while (glm::dot(to_light,sampledPt.normal) > 0) { //sample again if on backside of sphere
+//        //generate another random number
+//        float scale=RAND_MAX+1.;
+//        float base=rand()/scale;
+//        float fine=rand()/scale;
+//        float rand1 = base+fine/scale;
+
+//        float x = glm::sqrt(1-glm::pow(rand1,2))*glm::cos(2*PI*rand1);
+//        float y = glm::sqrt(1-glm::pow(rand1,2))*glm::cos(2*PI*rand1);
+//        float z = rand1;
+//        glm::vec3 pt = glm::vec3(x,y,z); //pt on unit sphere
+
+//        sampledPt = this->GetIntersection(Ray(glm::vec3(0.0f), glm::normalize(pt))); //intersects inside of sphere
+//        //reverse direction of normal
+//        sampledPt.normal = glm::normalize(sampledPt.point);
+//        //offset the intersection pt
+//        sampledPt.point = sampledPt.point + 0.0001f*sampledPt.normal;
+
+//        to_light = glm::normalize(sampledPt.point - isx.point);
+
+//}
+
+//    //transform from local to world coords
+//    sampledPt.point = glm::vec3(this->transform.T()*glm::vec4(isx.point,1.0f));
+//    sampledPt.normal = glm::normalize(glm::vec3((this->transform.invTransT()*glm::vec4(isx.normal,0.0f))));
+//    return sampledPt;
 
 Intersection Sphere::GetSurfaceSample(float u1, float u2, const glm::vec3 &isx_normal)
 {
@@ -80,8 +120,8 @@ Intersection Sphere::GetSurfaceSample(float u1, float u2, const glm::vec3 &isx_n
     result.point = glm::vec3(transform.T() * pointL);
     result.normal = glm::normalize(glm::vec3(transform.invTransT() * normalL));
     result.texture_color = color;
-    result.tangent = glm::normalize(glm::vec3(transform.T() * glm::vec4(T, 0)));
-    result.bitangent = glm::normalize(glm::vec3(transform.T() * glm::vec4(B, 0)));
+    result.tangent = glm::normalize(glm::vec3(transform.invTransT() * glm::vec4(T, 0)));
+    result.bitangent = glm::normalize(glm::vec3(transform.invTransT() * glm::vec4(B, 0)));
     result.object_hit = this;
     return result;
 }
@@ -112,17 +152,18 @@ Intersection Sphere::GetIntersection(Ray r)
     {
         glm::vec4 P = glm::vec4(r_loc.origin + t*r_loc.direction, 1);
         result.point = glm::vec3(transform.T() * P);
-        glm::vec3 normal = glm::normalize(glm::vec3(P));
+        glm::vec3 normalL = glm::normalize(glm::vec3(P));
+        glm::vec3 T = glm::normalize(glm::cross(glm::vec3(0,1,0), glm::vec3(normalL)));
+        glm::vec3 B = glm::cross(glm::vec3(normalL), T);
+
         glm::vec2 uv = GetUVCoordinates(glm::vec3(P));
-        result.normal = glm::normalize(glm::vec3(transform.invTransT() * (P - glm::vec4(0,0,0,1))));
+        result.normal = glm::normalize(glm::vec3(transform.invTransT()*glm::vec4(normalL,0.0f)));
         result.t = glm::distance(result.point, r.origin);
         result.texture_color = Material::GetImageColorInterp(uv, material->texture);
         result.object_hit = this;
-        //TODO: Store the tangent and bitangent
-        //check if the point is on the pole of the sphere!
-        glm::vec3 local_y = glm::normalize(glm::vec3(this->transform.invTransT()*glm::vec4(0.0f,1.0f,0.0f,0.0f))); //transform the u-axis
-        result.tangent = glm::normalize(glm::cross(local_y, result.normal));
-        result.bitangent = glm::normalize(glm::cross(result.normal, result.tangent));
+
+        result.tangent = glm::normalize(glm::vec3(transform.invTransT() * glm::vec4(T, 0)));
+        result.bitangent = glm::normalize(glm::vec3(transform.invTransT() * glm::vec4(B, 0)));
         return result;
     }
     return result;
@@ -264,4 +305,24 @@ void Sphere::create()
     bufNor.bind();
     bufNor.setUsagePattern(QOpenGLBuffer::StaticDraw);
     bufNor.allocate(sph_vert_nor, SPH_VERT_COUNT * sizeof(glm::vec3));
+
+    this->boundingBox = new BoundingBox();
+    setBoundingBox();
+}
+
+/**
+ * @brief Cube::setBoundingBox
+ * @brief called from after this.transform is defined
+ * @brief and TRANSFORMED (max x, max y, max z)
+ *
+ * @param cub_vert_pos (vertex positions of cubes)
+ */
+void Sphere::setBoundingBox() {
+    this->boundingBox->setTransformedBox(this->transform.T());
+    boundingBox->create();
+}
+
+
+bool Sphere::isMesh() {
+    return false;
 }

@@ -1,6 +1,10 @@
 #pragma once
 #include <la.h>
 #include <scene/geometry/geometry.h>
+#include <raytracing/ray.h>
+#include <scene/scene.h>
+#include <raytracing/BVHnode.h>
+
 
 class Geometry;
 class Material;
