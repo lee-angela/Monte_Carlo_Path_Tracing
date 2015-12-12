@@ -41,7 +41,7 @@ glm::vec3 UnifSampleDisc(float u1, float u2)
     theta *= PI / 4.f;
     float dx = r * cosf(theta);
     float dy = r * sinf(theta);
-    return glm::vec3(dx, dy, 0);
+    return glm::vec3(dx, dy, 0.0f);
 }
 
 float LambertBxDF::PDF(const glm::vec3 &wo, const glm::vec3 &wi) const {
@@ -54,7 +54,7 @@ glm::vec3 LambertBxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm
     //sample random point on hemisphere using Malley's method:
     glm::vec3 discPt = UnifSampleDisc(rand1, rand2);
     //convert to spherical coords
-    float p = glm::sqrt(glm::pow(discPt[0],2)+glm::pow(discPt[1],2)+glm::pow(discPt[2],2));
+    float p = glm::sqrt(glm::pow(discPt[0],2.0f)+glm::pow(discPt[1],2.0f)+glm::pow(discPt[2],2.0f));
     float phi = glm::acos(discPt[2]/p);
     glm::vec3 sph_pt = glm::vec3(p, phi, 0.0f); //spherical coords of random point on disc
     //project onto hemisphere
@@ -63,7 +63,7 @@ glm::vec3 LambertBxDF::SampleAndEvaluateScatteredEnergy(const glm::vec3 &wo, glm
     //calculate hemisphere sampled pt in Cartesian coords:
     discPt[0] = p*glm::cos(phi);
     discPt[1] = p*glm::sin(phi);
-    discPt[2] = glm::sqrt(1-(glm::pow(discPt[0],2) + glm::pow(discPt[1],2)));
+    discPt[2] = glm::sqrt(1-(glm::pow(discPt[0],2.0f) + glm::pow(discPt[1],2.0f)));
 
     //find hemisphere sampled pt & ray, send to EvaluateScatteredEnergy()
     glm::vec3 energy = EvaluateScatteredEnergy(wo,discPt);

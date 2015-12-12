@@ -10,66 +10,87 @@
 		<height>400</height>
 	</camera>
 
-	<geometry type="square" name="Back Wall">
+	<geometry type="obj" name="OBJ Mesh">
+		<filename>dodecahedron.obj</filename>
 		<transform>
-			<translate>0 0 -5</translate>
-			<scale>10 10 1</scale>
+			<translate>-1 2 0.8</translate>
+			<rotate>45 45 45</rotate>
+			<scale>1 1 1</scale>
 		</transform>
-		<material>textured_diffuse</material>
+		<material>white_diffuse</material>
 	</geometry>
 
+	<geometry type="obj" name="OBJ Mesh2">
+		<filename>dodecahedron.obj</filename>
+		<transform>
+			<translate>2 -1 -2</translate>
+			<rotate>90 30 0</rotate>
+			<scale>1 1 1</scale>
+		</transform>
+		<material>white_diffuse</material>
+	</geometry>
+	
+	
 	<geometry type="square" name="Right Wall">
 		<transform>
 			<translate>5 0 0</translate>
 			<rotate>0 -90 0</rotate>
 			<scale>10 10 1</scale>
 		</transform>
-		<material>green_diffuse</material>
+		<material>space_diffuse</material>
 	</geometry>
-
+	
 	<geometry type="square" name="Left Wall">
 		<transform>
 			<translate>-5 0 0</translate>
 			<rotate>0 90 0</rotate>
 			<scale>10 10 1</scale>
 		</transform>
-		<material>red_diffuse</material>=
+		<material>space_diffuse</material>=
 	</geometry>
-
+	
 	<geometry type="square" name="Ceiling">
 		<transform>
 			<translate>0 5 0</translate>
 			<rotate>90 0 0</rotate>
 			<scale>10 10 1</scale>
 		</transform>
-		<material>white_diffuse</material>
+		<material>space_diffuse</material>
+	</geometry>
+	
+	<geometry type="square" name="Floor">
+		<transform>
+			<translate>0 -5 0</translate>
+			<rotate>-90 0 0</rotate>
+			<scale>13 13 1</scale>
+		</transform>
+		<material>space_diffuse</material>
+	</geometry>
+	
+	
+	<geometry type="square" name="Back Wall">
+		<transform>
+			<translate>0 0 -5</translate>
+			<scale>13 13 1</scale>
+		</transform>
+		<material>space_diffuse</material>
 	</geometry>
 
 	<geometry type="square" name="Floor">
 		<transform>
 			<translate>0 -5 0</translate>
 			<rotate>-90 0 0</rotate>
-			<scale>10 10 1</scale>
+			<scale>13 13 1</scale>
 		</transform>
-		<material>white_diffuse</material>
+		<material>space_diffuse</material>
 	</geometry>
-
-	<geometry type="sphere" name="Yellow Sphere">
-		<transform>
-			<translate>0 0 0</translate>
-			<scale>2 2 2</scale>
-		</transform>
-		<material>yellow_diffuse</material>
-	</geometry>
-
-	<geometry type="sphere" name="White Sphere">
-		<transform>
-			<translate>-3 0 2</translate>
-			<scale>4 4 4</scale>
-		</transform>
-		<material>white_diffuse</material>
-	</geometry>
-
+	
+	
+	
+	
+	
+	
+	
 	<geometry type="square" name="Light Source">
 		<transform>
 			<translate>0 4.5 0</translate>
@@ -78,50 +99,30 @@
 		</transform>
 		<material>emissive_material</material>
 	</geometry>
-
+	
 	<material type="default" name="white_diffuse">
 		<baseColor>1 1 1</baseColor>
 		<bxdf>lambert1</bxdf>
 	</material>
-
-	<material type="default" name="red_diffuse">
-		<baseColor>.6 .2 .4</baseColor>
-		<bxdf>lambert1</bxdf>
-	</material>
-
-	<material type="default" name="green_diffuse">
-		<baseColor>.7 .9 .6</baseColor>
-		<bxdf>lambert1</bxdf>
-	</material>
-
-	<material type="default" name="yellow_diffuse">
-		<baseColor>.8 .8 0.25</baseColor>
-		<bxdf>lambert1</bxdf>
-	</material>
-
-	<material type="default" name="textured_diffuse">
+	
+	<material type="default" name="space_diffuse">
 		<baseColor>1 1 1</baseColor>
-		<texture>tex_nor_maps/sky.jpg</texture>
-		<normalMap>tex_nor_maps/165_norm.jpg</normalMap>
+		<texture>tex_nor_maps/space.jpg</texture>
 		<bxdf>lambert1</bxdf>
 	</material>
-
-	<material type="default" name="reflective_white">
-		<baseColor>1 1 1</baseColor>
-		<bxdf>specular_reflective1</bxdf>
-	</material>
-
+	
 	<material type="light" name="emissive_material" intensity="50">
 		<baseColor>1 1 1</baseColor>
 	</material>
-
+	
 	<bxdf type="lambert" name="lambert1" diffuseColor="1 1 1">
 	</bxdf>
-
+	
+	
 	<integrator type="raytrace">
 		<maxDepth>5</maxDepth>
 	</integrator>
 
 	<pixelSampleLength>10</pixelSampleLength>
-
+	
 </scene>

@@ -101,16 +101,18 @@ Intersection Triangle::GetIntersection(Ray r){
 
     glm::vec3 P = r.origin + t * r.direction;
     //2. Barycentric test
-    float S = 0.5f * glm::length(glm::cross(points[0] - points[1], points[0] - points[2]));
-    float s1 = 0.5f * glm::length(glm::cross(P - points[1], P - points[2]))/S;
-    float s2 = 0.5f * glm::length(glm::cross(P - points[2], P - points[0]))/S;
-    float s3 = 0.5f * glm::length(glm::cross(P - points[0], P - points[1]))/S;
+    float S = 0.5f * glm::length(glm::cross(points[1] - points[0], points[2] - points[0]));
+    float s1 = 0.5f * glm::length(glm::cross(points[1]-P, points[2]-P))/S;
+    float s2 = 0.5f * glm::length(glm::cross(points[2]-P, points[0]-P))/S;
+    float s3 = 0.5f * glm::length(glm::cross(points[0]-P, points[1]-P))/S;
     float sum = s1 + s2 + s3;
 
-    if(s1 >= 0 && s1 <= 1 && s2 >= 0 && s2 <= 1 && s3 >= 0 && s3 <= 1 && fequal(sum, 1.0f)){
+    if(s1 >= 0 && s1 <= 1 && s2 >= 0 && s2 <= 1 && s3 >= 0 && s3 <= 1){
         result.t = t;
         result.texture_color = Material::GetImageColorInterp(GetUVCoordinates(glm::vec3(P)), material->texture);
         result.object_hit = this;
+        result.point = glm::vec3(transform.invT()*glm::vec4(P, 1.0f)); //tranform T to world coords
+        result.normal = glm::vec3(glm::normalize(transform.invTransT()*glm::vec4(plane_normal, 1.0f))); //transform normal to world coords
         //TODO: Store the tangent and bitangent
         glm::vec3 changeP1 = this->points[1] - this->points[0];
         glm::vec3 changeP2 = this->points[2] - this->points[0];
@@ -138,6 +140,7 @@ Intersection Mesh::traverseMeshBVHTree(BVHnode* node, Ray r) {
     if (pt.object_hit != NULL) { // ELSE pt.object_hit = NULL.
         //check if this is leaf node
         if (node->isLeaf()) {
+            //tranform all the points
             return node->geom->GetIntersection(r);
         }
 
@@ -490,6 +493,52 @@ int compareZ(Triangle*& a, Triangle*& b) {
     }
 }
 
+//calculates surface areas of all bounding boxes of objs in list
+float calcAreas(QList<Triangle*> objs) {
+    float totSA = 0.0f;
+    for (int i = 0; i < objs.length(); i++) {
+        totSA += objs[i]->boundingBox->getSurfArea();
+    }
+    return totSA;
+}
+
+void splitAreas(QList<Triangle*> *firstHalf, QList<Triangle*> *secondHalf, QList<Triangle*> all) {
+    int length1 = 1;
+    int length2 = all.length()-1;
+    int splitIdx = 0; //last index included in the first half of objs
+
+    QList<Triangle*> prev1(all.mid(0,length1));
+    QList<Triangle*> prev2(all.mid(1,all.length()-1));
+
+    float prevArea1 = calcAreas(prev1);
+    float prevArea2 = calcAreas(prev2);
+
+    for (int i = 0; i < all.length(); i++) {
+        length1++; //add one to firstHalf list of objs
+        length2--; //remove one from secondHalf list
+        QList<Triangle*> temp1(all.mid(0, length1));
+        QList<Triangle*> temp2(all.mid(splitIdx, length2));
+
+        float area1 = calcAreas(temp1);
+        float area2 = calcAreas(temp2);
+        if (area1 > area2) { //when area of first is finally greater than area 2
+            //check if the previous split was better balanced:
+
+            float prevDifference = glm::abs(prevArea2 - prevArea1);
+            float newDifference = glm::abs(area1 - area2);
+            if (prevDifference > newDifference) { //they are NOW more evenly split
+                prev1 = temp1;
+                prev2 = temp2;
+            } else { //they were previously more evenly split
+                //current prev1 and prev2 contain ideal split
+                break; //dont replace the return value with the new lists
+            }
+        }
+    }
+    *firstHalf = prev1;
+    *secondHalf = prev2;
+
+}
 
 BVHnode* Mesh::createMeshBVHTree(BVHnode* node, QList<Triangle*> faces, int depth) {
     //create the internal mesh BVH node tree
@@ -520,12 +569,12 @@ BVHnode* Mesh::createMeshBVHTree(BVHnode* node, QList<Triangle*> faces, int dept
         qSort(faces.begin(), faces.end(), compareZ);
     }
 
-    //split the geometry objects according to appropriate coords
-    QList<Triangle*> leftHalffaces(faces.mid(0,floor((float)faces.length()/2.0f)));
-    QList<Triangle*> rightHalffaces(faces.mid(floor((float)faces.length()/2.0f), ceil((float)faces.length()/2.0f)));
+    QList<Triangle*> firstHalf;
+    QList<Triangle*> secondHalf;
+    splitAreas(&firstHalf, &secondHalf, faces);
 
-    node->leftChild = createMeshBVHTree(new BVHnode(), leftHalffaces, depth+1);
-    node->rightChild = createMeshBVHTree(new BVHnode(), rightHalffaces, depth+1);
+    node->leftChild = createMeshBVHTree(new BVHnode(), firstHalf, depth+1);
+    node->rightChild = createMeshBVHTree(new BVHnode(), secondHalf, depth+1);
 
     node->boundingBox->create();
     return node;

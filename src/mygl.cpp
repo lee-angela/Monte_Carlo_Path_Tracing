@@ -260,6 +260,58 @@ int compareZcoords(const Geometry* a, const Geometry* b) {
 }
 
 
+//calculates surface areas of all bounding boxes of objs in list
+float calcAreas(QList<Geometry*> objs) {
+    float totSA = 0.0f;
+    for (int i = 0; i < objs.length(); i++) {
+        totSA += objs[i]->boundingBox->getSurfArea();
+    }
+    return totSA;
+}
+
+void splitAreas(QList<Geometry*> *firstHalf, QList<Geometry*> *secondHalf, QList<Geometry*> all) {
+    int length1 = 1;
+    int length2 = all.length()-1;
+    int splitIdx = 0; //last index included in the first half of objs
+
+    QList<Geometry*> prev1(all.mid(0,length1));
+    QList<Geometry*> prev2(all.mid(1,all.length()-1));
+
+    float prevArea1 = calcAreas(prev1);
+    float prevArea2 = calcAreas(prev2);
+
+    for (int i = 0; i < all.length(); i++) {
+        length1++; //add one to firstHalf list of objs
+        length2--; //remove one from secondHalf list
+        QList<Geometry*> temp1(all.mid(0, length1));
+        QList<Geometry*> temp2(all.mid(splitIdx, length2));
+
+        float area1 = calcAreas(temp1);
+        float area2 = calcAreas(temp2);
+        if (area1 > area2) { //when area of first is finally greater than area 2
+            //check if the previous split was better balanced:
+
+            float prevDifference = glm::abs(prevArea2 - prevArea1);
+            float newDifference = glm::abs(area1 - area2);
+            if (prevDifference > newDifference) { //they are NOW more evenly split
+                prev1 = temp1;
+                prev2 = temp2;
+            } else { //they were previously more evenly split
+                //current prev1 and prev2 contain ideal split
+                break; //dont replace the return value with the new lists
+            }
+        }else {
+            //they havent been replaced, make prev=curr area calcs
+            prevArea1 = area1;
+            prevArea2 = area2;
+        }
+    }
+    *firstHalf = prev1;
+    *secondHalf = prev2;
+
+}
+
+
 /**
  * @brief MyGL::createBVHtree
  * @brief recursively splits the objects in geometry evenly (along x/y axis) depending on depth
@@ -294,13 +346,16 @@ BVHnode* MyGL::createBVHtree(BVHnode* root, QList<Geometry*> objs, int depth) {
         //sort according to z coords
         std::sort(objs.begin(), objs.end(), compareZcoords);
     }
+    QList<Geometry*> firstHalf;
+    QList<Geometry*> secondHalf;
+    splitAreas(&firstHalf, &secondHalf, objs);
 
-    //split the geometry objects according to appropriate coords
-    QList<Geometry*> leftHalfObjs(objs.mid(0,floor((float)objs.length()/2.0f)));
-    QList<Geometry*> rightHalfObjs(objs.mid(floor((float)objs.length()/2.0f), ceil((float)objs.length()/2.0f)));
+//    //split the geometry objects according to appropriate coords
+//    QList<Geometry*> leftHalfObjs(objs.mid(0,floor((float)objs.length()/2.0f)));
+//    QList<Geometry*> rightHalfObjs(objs.mid(floor((float)objs.length()/2.0f), ceil((float)objs.length()/2.0f)));
 
-    root->leftChild = createBVHtree(new BVHnode(), leftHalfObjs, depth+1);
-    root->rightChild = createBVHtree(new BVHnode(), rightHalfObjs, depth+1);
+    root->leftChild = createBVHtree(new BVHnode(), firstHalf, depth+1);
+    root->rightChild = createBVHtree(new BVHnode(), secondHalf, depth+1);
 
     root->boundingBox->create();
     return root;
@@ -354,7 +409,7 @@ void MyGL::RaytraceScene()
         return;
     }
 
-    glm::vec3 test = integrator.TraceRay(this->scene.camera.Raycast(216, 274), 0);
+    glm::vec3 test = integrator.TraceRay(this->scene.camera.Raycast(365,114), 0); //right wall
 
 #define MULTITHREADED
 #ifdef MULTITHREADED
@@ -389,7 +444,7 @@ void MyGL::RaytraceScene()
             unsigned int x_start = X * x_block_size;
             unsigned int x_end = glm::min((X + 1) * x_block_size, width);
             //Create and run the thread
-            render_threads[Y * x_block_count + X] = new RenderThread(x_start, x_end, y_start, y_end, 1, 5, &(scene.film), &(scene.camera), &(integrator));
+            render_threads[Y * x_block_count + X] = new RenderThread(x_start, x_end, y_start, y_end, 2, 5, &(scene.film), &(scene.camera), &(integrator));
             render_threads[Y * x_block_count + X]->start();
         }
     }

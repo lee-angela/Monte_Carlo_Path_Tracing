@@ -51,7 +51,7 @@ glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned i
         return glm::vec3(0.0f);
     }
 
-  //CALCULATE LIGHT MIS (first half of total direct lighting LTE)
+    //CALCULATE LIGHT MIS (first half of total direct lighting LTE)
     glm::vec3 LD_light_sampling = glm::vec3(0.0f);
 
     if (isx.object_hit == NULL) {
@@ -84,8 +84,11 @@ glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned i
 
     glm::vec3 wo = glm::normalize(this->scene->camera.eye - isx.point);
 
-    glm::vec3 bxdf = isx.object_hit->material->EvaluateScatteredEnergy(isx,toLocalCoords(isx,wo),toLocalCoords(isx,wi),bxdf_idx, BSDF_ALL);
     glm::vec3 Li = lightSample.object_hit->material->EvaluateScatteredEnergy(lightSample,-wi,-wi,bxdf_idx,BSDF_ALL); //light radiance
+    glm::vec3 bxdf = isx.object_hit->material->EvaluateScatteredEnergy(isx,toLocalCoords(isx,wo),toLocalCoords(isx,wi),bxdf_idx, BSDF_ALL);
+
+    //following fxn SETS the bxdf pdf only - dont use value
+    isx.object_hit->material->SampleAndEvaluateScatteredEnergy(isx, toLocalCoords(isx,wo), wi, bxdf_pdf ,BSDF_ALL);
 
     //flip the direction of light_feeler ray used to calculate the pdf of light
     Ray pdfLightRay = Ray(isx.point, glm::normalize(lightSample.point-isx.point));
@@ -108,15 +111,17 @@ glm::vec3 Integrator::EstimateDirectLighting(const Intersection &isx, unsigned i
     if (obstruction.object_hit != lightSample.object_hit) {
         Li = glm::vec3(0.0f,0.0f,0.0f);
     } else {
-        Li = lightSample.object_hit->material->EvaluateScatteredEnergy(lightSample,-wo,-wo,bxdf_idx,BSDF_ALL);
+        int bxdf_idx_dummy; //not to be used
+        Li = lightSample.object_hit->material->EvaluateScatteredEnergy(lightSample,-wo,-wo,bxdf_idx_dummy,BSDF_ALL);
     }
 
     if (light_pdf > 0.0001f) {
-        LD_light_sampling = bxdf * Li * glm::abs(glm::dot(wi, isx.normal))/light_pdf;
+        float absdot = glm::abs(glm::dot(wi, isx.normal));
+        LD_light_sampling = 1.2f*bxdf * Li * 1.2f*absdot/light_pdf;
         return LD_light_sampling;
     } else if (light_pwr_heuristic > 0.0001f) {
         float temp = glm::abs(glm::dot(wo, isx.normal));
-        LD_light_sampling = 3.0f*bxdf * Li * glm::abs(glm::dot(wo, isx.normal)) * light_pwr_heuristic /light_pdf;
+        LD_light_sampling = bxdf * Li * glm::abs(glm::dot(wo, isx.normal)) * light_pwr_heuristic /light_pdf;
     } else {
         LD_light_sampling = glm::vec3(0.0f);
     }
@@ -167,6 +172,9 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
     glm::vec3 woW = glm::normalize(this->scene->camera.eye - isx.point);
 
 
+    if (isx.object_hit == NULL) {
+        return glm::vec3(0.0f);
+    }
     if (isx.object_hit->material->is_light_source) {
         return glm::vec3(0.0f); //light emitted is calculated in EstimateDirectLighting()!
     }
@@ -224,7 +232,7 @@ glm::vec3 Integrator::EstimateIndirectLighting(const Intersection &isx, unsigned
         glm::vec3 bxdf = next_hit.object_hit->material->EvaluateScatteredEnergy(next_hit, toLocalCoords(next_hit, woW),toLocalCoords(next_hit, sampled_wi), bxdf_idx, BSDF_ALL);
 
 
-//        float maxRGB = glm::max(rgb_comp[2],glm::max(rgb_comp[0], rbg_comp[1])); //find max comp of this vector
+        //        float maxRGB = glm::max(rgb_comp[2],glm::max(rgb_comp[0], rbg_comp[1])); //find max comp of this vector
 
 
 
@@ -262,9 +270,9 @@ glm::vec3 Integrator::TraceRay(Ray r, unsigned int depth)
 
     unsigned int N = 10;
     glm::vec3 direct_light = EstimateDirectLighting(isx,N);
-    //    glm::vec3 indirect_light = EstimateIndirectLighting(isx,N);
+//    glm::vec3 indirect_light = EstimateIndirectLighting(isx,N);
 
-    return direct_light/*+indirect_light*/;
+    return direct_light/* + indirect_light*/;
 }
 
 

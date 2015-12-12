@@ -26,7 +26,13 @@ void BoundingBox::setTransformationMats(glm::mat4 scale, glm::mat4 transl) {
     this->invTransposeT = glm::inverse(glm::transpose(this->transformation));
 }
 
+float BoundingBox::getSurfArea() { //returns surface area of the bounding box
+    float lenX = (float)this->maxBound[0] - (float)this->minBound[0];
+    float lenY = (float)this->maxBound[1] - (float)this->minBound[1];
+    float lenZ = (float)this->maxBound[2] - (float)this->minBound[2];
 
+    return 2*(lenX*lenY) + 2*(lenX*lenZ) + 2*(lenY*lenZ);
+}
 
 /**
  * @brief BoundingBox::setTransformedBox

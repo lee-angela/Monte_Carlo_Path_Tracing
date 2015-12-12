@@ -42,6 +42,7 @@ public:
     void setTransformationMats(glm::mat4 scale, glm::mat4 transl);
 
     Intersection getIntersection(Ray r);
+    float getSurfArea();
 
     void create();
     virtual GLenum drawMode();

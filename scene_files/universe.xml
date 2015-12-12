@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<scene>
+    <camera>
+        <target>0 0 0</target>
+        <eye>0 0.5 12</eye>
+        <worldUp>0 1 0</worldUp>
+        <fov>50</fov>
+        <width>400</width>
+        <height>400</height>
+    </camera>
+    
+    <geometry type="square" name="Back Wall">
+        <transform>
+            <translate>0 0 -10</translate>
+            <scale>20 20 1</scale>
+        </transform>
+        <material>space_diffuse</material>
+    </geometry>
+    
+    <geometry type="square" name="Right Wall">
+        <transform>
+            <translate>10 0 0</translate>
+            <rotate>0 -90 0</rotate>
+            <scale>20 20 1</scale>
+        </transform>
+        <material>space_diffuse</material>
+    </geometry>
+    
+    <geometry type="square" name="Left Wall">
+        <transform>
+            <translate>-10 0 0</translate>
+            <rotate>0 90 0</rotate>
+            <scale>20 20 1</scale>
+        </transform>
+        <material>space_diffuse</material>=
+    </geometry>
+    
+    <geometry type="square" name="Ceiling">
+        <transform>
+            <translate>0 10 0</translate>
+            <rotate>90 0 0</rotate>
+            <scale>20 20 1</scale>
+        </transform>
+        <material>space_diffuse</material>
+    </geometry>
+    
+    <geometry type="square" name="Floor">
+        <transform>
+            <translate>0 -10 0</translate>
+            <rotate>-90 0 0</rotate>
+            <scale>20 20 1</scale>
+        </transform>
+        <material>space_diffuse</material>
+    </geometry>
+    
+    
+    
+    <geometry type="sphere" name="Mercury">
+        <transform>
+            <translate>-3.5 0 0 </translate>
+            <scale>0.3 0.3 0.3</scale>
+        </transform>
+        <material>mercury_diffuse</material>
+    </geometry>
+    
+    <geometry type="sphere" name="Venus">
+        <transform>
+            <translate>-3 0 0 </translate>
+            <scale>0.6 0.6 0.6</scale>
+        </transform>
+        <material>venus_diffuse</material>
+    </geometry>
+    
+    <geometry type="sphere" name="Earth">
+        <transform>
+            <translate>-2 0 0 </translate>
+            <scale>0.8 0.8 0.8</scale>
+        </transform>
+        <material>earth_diffuse</material>
+    </geometry>
+    
+    <geometry type="sphere" name="Mars">
+        <transform>
+            <translate>-1 0 0 </translate>
+            <scale>0.5 0.5 0.5</scale>
+        </transform>
+        <material>mars_diffuse</material>
+    </geometry>
+    
+    <geometry type="sphere" name="Jupiter">
+        <transform>
+            <translate>0.3 0 0 </translate>
+            <scale>1.6 1.6 1.6</scale>
+        </transform>
+        <material>jupiter_diffuse</material>
+    </geometry>
+    
+    <geometry type="sphere" name="Saturn">
+        <transform>
+            <translate>2 0 0 </translate>
+            <scale>1.4 1.4 1.4</scale>
+        </transform>
+        <material>saturn_diffuse</material>
+    </geometry>
+	
+    
+    <geometry type="sphere" name="Uranus">
+        <transform>
+            <translate>3.5 0 0 </translate>
+            <scale>1 1 1</scale>
+        </transform>
+        <material>uranus_diffuse</material>
+    </geometry>
+    
+    <geometry type="sphere" name="Neptune">
+        <transform>
+            <translate>4.5 0 0 </translate>
+            <scale>0.8 0.8 0.8</scale>
+        </transform>
+        <material>neptune_diffuse</material>
+    </geometry>
+    
+    
+    
+    <geometry type="sphere" name="Sun">
+        <transform>
+            <translate>-5 0 0</translate>
+            <scale>2 2 2</scale>
+        </transform>
+        <material>sun_material</material>
+    </geometry>
+    
+    <geometry type="square" name="Light_Source">
+        <transform>
+            <translate>-9 6 0</translate>
+            <rotate>45 90 0</rotate>
+            <scale>10 10 10</scale>
+        </transform>
+        <material>emissive_material</material>
+    </geometry>
+	
+	
+	
+    <material type="default" name="space_diffuse">
+        <baseColor>1 1 1</baseColor>
+        <texture>tex_nor_maps/space.jpg</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	<material type="default" name="mercury_diffuse">
+        <baseColor>1 1 1</baseColor>
+		<texture>tex_nor_maps/mercury.bmp</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	<material type="default" name="venus_diffuse">
+        <baseColor>1 1 1</baseColor>
+		<texture>tex_nor_maps/venus.bmp</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	<material type="default" name="earth_diffuse">
+        <baseColor>1 1 1</baseColor>
+		<texture>tex_nor_maps/earth.bmp</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	<material type="default" name="mars_diffuse">
+        <baseColor>1 1 1</baseColor>
+		<texture>tex_nor_maps/mars.bmp</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	<material type="default" name="jupiter_diffuse">
+        <baseColor>1 1 1</baseColor>
+		<texture>tex_nor_maps/jupiter.bmp</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	<material type="default" name="saturn_diffuse">
+        <baseColor>1 1 1</baseColor>
+		<texture>tex_nor_maps/saturn.bmp</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	<material type="default" name="uranus_diffuse">
+        <baseColor>1 1 1</baseColor>
+		<texture>tex_nor_maps/uranus.bmp</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	<material type="default" name="neptune_diffuse">
+        <baseColor>1 1 1</baseColor>
+		<texture>tex_nor_maps/neptune.bmp</texture>
+        <bxdf>lambert1</bxdf>
+    </material>
+	
+	
+	
+	
+	
+    
+    <material type="default" name="reflective_white">
+        <baseColor>1 1 1</baseColor>
+        <bxdf>specular_reflective1</bxdf>
+    </material>
+    
+    <material type="light" name="emissive_material" intensity="100">
+        <baseColor>1 1 1</baseColor>
+    </material>
+	
+	 <material type="light" name="sun_material" intensity="100">
+        <baseColor>1 0.5 0</baseColor>
+    </material>
+    
+    
+    <bxdf type="lambert" name="lambert1" diffuseColor="1 1 1">
+    </bxdf>
+    
+    <integrator type="raytrace">
+        <maxDepth>5</maxDepth>
+    </integrator>
+    
+    <pixelSampleLength>10</pixelSampleLength>
+    
+</scene>
